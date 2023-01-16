@@ -1,3 +1,10 @@
 __pycache__
 folders
 load
+
+# folder
+datasets/
+superresolution/
+trainsets/
+testsets/
+save/

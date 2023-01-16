@@ -84,7 +84,6 @@ def resize_fn(img, size):
         transforms.Resize(size, Image.BICUBIC)(
             transforms.ToPILImage()(img)))
 
-
 @register('sr-implicit-downsampled')
 class SRImplicitDownsampled(Dataset):
 

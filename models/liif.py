@@ -17,13 +17,19 @@ class LIIF(nn.Module):
         self.feat_unfold = feat_unfold
         self.cell_decode = cell_decode
 
+        print("#################################")
+        print(f"local_ensemble: ", local_ensemble)
+        print(f"feat_unfold: ", feat_unfold)
+        print(f"cell_decode: ", cell_decode)
+        print("#################################")
+
         self.encoder = models.make(encoder_spec)
 
         if imnet_spec is not None:
             imnet_in_dim = self.encoder.out_dim
             if self.feat_unfold:
                 imnet_in_dim *= 9
-            imnet_in_dim += 2 # attach coord
+            imnet_in_dim += 2               # attach coord
             if self.cell_decode:
                 imnet_in_dim += 2
             self.imnet = models.make(imnet_spec, args={'in_dim': imnet_in_dim})
@@ -35,7 +41,7 @@ class LIIF(nn.Module):
         return self.feat
 
     def query_rgb(self, coord, cell=None):
-        feat = self.feat
+        feat = self.feat   # ! feat size: [16 x 64 x 48 x 48]
 
         if self.imnet is None:
             ret = F.grid_sample(feat, coord.flip(-1).unsqueeze(1),
@@ -70,14 +76,20 @@ class LIIF(nn.Module):
                 coord_[:, :, 0] += vx * rx + eps_shift
                 coord_[:, :, 1] += vy * ry + eps_shift
                 coord_.clamp_(-1 + 1e-6, 1 - 1e-6)
-                q_feat = F.grid_sample(
+
+                # ! q_feat : B, N, N, 576
+                q_feat = F.grid_sample(              
                     feat, coord_.flip(-1).unsqueeze(1),
                     mode='nearest', align_corners=False)[:, :, 0, :] \
                     .permute(0, 2, 1)
+
+                # ! q_coord : B, N, N, 2
                 q_coord = F.grid_sample(
                     feat_coord, coord_.flip(-1).unsqueeze(1),
                     mode='nearest', align_corners=False)[:, :, 0, :] \
                     .permute(0, 2, 1)
+
+                # ! rel_coord : B, N*N, 2
                 rel_coord = coord - q_coord
                 rel_coord[:, :, 0] *= feat.shape[-2]
                 rel_coord[:, :, 1] *= feat.shape[-1]
@@ -107,4 +119,5 @@ class LIIF(nn.Module):
 
     def forward(self, inp, coord, cell):
         self.gen_feat(inp)
+
         return self.query_rgb(coord, cell)

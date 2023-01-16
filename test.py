@@ -56,6 +56,7 @@ def eval_psnr(loader, model, data_norm=None, eval_type=None, eval_bsize=None,
         raise NotImplementedError
 
     val_res = utils.Averager()
+    psnr_y_res = utils.Averager()
 
     pbar = tqdm(loader, leave=False, desc='val')
     for batch in pbar:
@@ -83,6 +84,7 @@ def eval_psnr(loader, model, data_norm=None, eval_type=None, eval_bsize=None,
 
         res = metric_fn(pred, batch['gt'])
         val_res.add(res.item(), inp.shape[0])
+        # psnr_y_res = utils.psnr_y(pred, batch['gt'])
 
         if verbose:
             pbar.set_description('val {:.4f}'.format(val_res.item()))

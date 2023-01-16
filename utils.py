@@ -144,3 +144,45 @@ def calc_psnr(sr, hr, dataset=None, scale=1, rgb_range=1):
         valid = diff
     mse = valid.pow(2).mean()
     return -10 * torch.log10(mse)
+
+def calc_psnr_y(sr, hr, dataset=None, scale=1):
+    diff = rgb2ycbcr(sr, only_y=True) - rgb2ycbcr(hr, only_y=True)
+    if dataset is not None:
+        if dataset == 'benchmark':
+            shave = scale
+            if diff.size(1) > 1:
+                gray_coeffs = [65.738, 129.057, 25.064]
+                convert = diff.new_tensor(gray_coeffs).view(1, 3, 1, 1) / 256
+                diff = diff.mul(convert).sum(dim=1)
+        elif dataset == 'div2k':
+            shave = scale + 6
+        else:
+            raise NotImplementedError
+        valid = diff[..., shave:-shave, shave:-shave]
+    else:
+        valid = diff
+    mse = valid.pow(2).mean()
+    return -10 * torch.log10(mse)
+
+def rgb2ycbcr(img, only_y=True):
+    '''same as matlab rgb2ycbcr
+    only_y: only return Y channel
+    Input:
+        uint8, [0, 255]
+        float, [0, 1]
+    '''
+    in_img_type = img.dtype
+    img.astype(np.float32)
+    if in_img_type != np.uint8:
+        img *= 255.
+    # convert
+    if only_y:
+        rlt = np.dot(img, [65.481, 128.553, 24.966]) / 255.0 + 16.0
+    else:
+        rlt = np.matmul(img, [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786],
+                              [24.966, 112.0, -18.214]]) / 255.0 + [16, 128, 128]
+    if in_img_type == np.uint8:
+        rlt = rlt.round()
+    else:
+        rlt /= 255.
+    return rlt.astype(in_img_type)
