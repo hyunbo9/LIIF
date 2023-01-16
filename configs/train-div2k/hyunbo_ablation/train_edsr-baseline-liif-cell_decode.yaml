@@ -45,9 +45,9 @@ model:
       args:
         no_upsampling: true
 
-      local_ensemble: true
-      feat_unfold: true
-      cell_decode: true
+        local_ensemble: true
+        feat_unfold: true
+        cell_decode: false
 
       
     imnet_spec:
