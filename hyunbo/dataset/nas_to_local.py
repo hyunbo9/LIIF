@@ -5,8 +5,7 @@ NAS_ADDRESS = "/media/NAS3/CIPLAB/users/hyunbo/super_resolution/liif"
 
 def main():
     folder_list = [
-        "trainsets",
-        "testsets",
+        "load",
     ]
 
     for folder in folder_list:
